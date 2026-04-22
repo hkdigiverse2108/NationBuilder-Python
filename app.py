@@ -94,6 +94,60 @@ def load_data():
         return None
 
 # ---------------------------------------------------------------------------
+# Helper: Check per-phone access limit (max 5 unique students per phone)
+# ---------------------------------------------------------------------------
+MAX_RESULTS_PER_PHONE = 5
+
+def check_phone_limit(phone: str, current_student_idx: int) -> tuple:
+    """
+    Returns (is_blocked: bool, linked_count: int).
+    - is_blocked = True if phone already accessed 5 different students AND
+      the current student is NOT one of them (i.e., this is a new / 6th student).
+    - Repeat access to an already-verified student is always allowed.
+    - On any error, returns (False, 0) so legitimate users are never blocked.
+    """
+    try:
+        client = get_gsheet_client()
+        sheet = client.open_by_key(GSHEET_ID).sheet1
+
+        headers = sheet.row_values(1)
+        if "Phone Number" not in headers:
+            return False, 0  # Column not yet created — no restriction
+
+        col_idx = headers.index("Phone Number") + 1
+        # Fetch entire column, skip header row
+        phone_col = sheet.col_values(col_idx)[1:]
+
+        # Build list of 0-based row indices that this phone already has access to
+        linked_rows = []
+        for row_i, cell_val in enumerate(phone_col):
+            if not cell_val:
+                continue
+            # Split by comma and strip whitespace / leading quote added during save
+            stored_phones = [p.strip().lstrip("'") for p in cell_val.split(",")]
+            if phone in stored_phones:
+                linked_rows.append(row_i)
+
+        count = len(linked_rows)
+        print(f"[Limit] Phone {phone} is linked to {count} student(s). Current student idx: {current_student_idx}")
+
+        # If this student was already verified by this phone — allow repeat access
+        if current_student_idx in linked_rows:
+            print(f"[Limit] Repeat access — allowing.")
+            return False, count
+
+        # New student — block if limit reached
+        if count >= MAX_RESULTS_PER_PHONE:
+            print(f"[Limit] Blocked — limit of {MAX_RESULTS_PER_PHONE} reached.")
+            return True, count
+
+        return False, count
+
+    except Exception as e:
+        print(f"[Limit] Error checking phone limit: {e}")
+        return False, 0  # Fail open so legitimate users aren't blocked by a GSheets error
+
+# ---------------------------------------------------------------------------
 # Helper: Load / save daily SMS counters from disk
 # ---------------------------------------------------------------------------
 def _load_counters() -> dict:
@@ -243,12 +297,22 @@ async def get_students():
 # API: send OTP via real SMS
 # ---------------------------------------------------------------------------
 @app.post("/api/send-otp")
-async def api_send_otp(body: SendOtpRequest):
+async def api_send_otp(body: SendOtpRequest, request: Request):
     phone = body.phone_number.strip()
 
     # Validate 10-digit Indian number
     if not phone.isdigit() or len(phone) != 10 or phone[0] not in "6789":
         raise HTTPException(status_code=400, detail="Invalid mobile number")
+
+    # Check per-phone access limit before wasting an SMS credit
+    student_idx = request.session.get("student_idx")
+    if student_idx is not None:
+        is_blocked, linked_count = check_phone_limit(phone, student_idx)
+        if is_blocked:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Access limit reached. One mobile number can only be used to view results for up to {MAX_RESULTS_PER_PHONE} students."
+            )
 
     # Generate a 6-digit OTP and store it
     otp = str(random.randint(100000, 999999))
@@ -308,7 +372,9 @@ async def api_verify_otp(body: VerifyOtpRequest, request: Request):
         # Fetch existing value to append instead of overwrite
         existing_val = sheet.cell(sheet_row, col_idx).value or ""
         
-        if phone in existing_val:
+        # Use a proper split to avoid false substring matches
+        existing_phones = [p.strip().lstrip("'") for p in existing_val.split(",")] if existing_val else []
+        if phone in existing_phones:
             print(f"[GSheets] Phone {phone} already exists in row {sheet_row}. Skipping append.")
         else:
             if existing_val:

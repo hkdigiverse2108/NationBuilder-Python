@@ -26,7 +26,10 @@ document.getElementById('send-otp-btn').onclick = async () => {
         document.getElementById('sms-sent-number').textContent = phone;
         document.getElementById('send-otp-btn').textContent = "Resend OTP";
     } else {
-        alert("Failed to send OTP. Try again.");
+        const errorData = await res.json().catch(() => ({}));
+        const msg = errorData.detail || "Failed to send OTP. Please try again.";
+        document.getElementById('otp-error').textContent = msg;
+        document.getElementById('otp-error').classList.remove('hidden');
     }
 };
 
