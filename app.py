@@ -304,11 +304,22 @@ async def api_verify_otp(body: VerifyOtpRequest, request: Request):
         
         # DataFrame row_index is 0-based data row (row 2 in sheet)
         sheet_row = body.row_index + 2
-        print(f"[GSheets] Updating Cell: Row {sheet_row}, Col {col_idx} with {phone}")
         
-        # Use single quote prefix to ensure Google Sheets treats it as a string (prevents scientific notation)
-        sheet.update_cell(sheet_row, col_idx, f"'{phone}")
-        print("[GSheets] Save successful!")
+        # Fetch existing value to append instead of overwrite
+        existing_val = sheet.cell(sheet_row, col_idx).value or ""
+        
+        if phone in existing_val:
+            print(f"[GSheets] Phone {phone} already exists in row {sheet_row}. Skipping append.")
+        else:
+            if existing_val:
+                new_val = f"{existing_val}, {phone}"
+            else:
+                new_val = phone
+            
+            print(f"[GSheets] Updating Cell: Row {sheet_row}, Col {col_idx} with {new_val}")
+            # Use single quote prefix to ensure Google Sheets treats it as a string
+            sheet.update_cell(sheet_row, col_idx, f"'{new_val}")
+            print("[GSheets] Save successful!")
         
     except Exception as e:
         print(f"[GSheets] Error saving phone: {e}")
