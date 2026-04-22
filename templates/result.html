@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% set active_step = 3 %}
+
+{% block content %}
+<div class="cert-wrapper" id="result-printable">
+  <div class="cert-header">
+    <div>
+      <div class="cert-org-name" style="display: flex; flex-direction: column; line-height: 1; gap: 0;">
+        <span style="color: #FF6B00; font-family: 'DM Sans', sans-serif; font-weight: 900; font-size: 2rem; text-transform: uppercase; letter-spacing: -0.01em;">NATION</span>
+        <span style="color: #ffffff; font-family: 'DM Sans', sans-serif; font-weight: 900; font-size: 2rem; text-transform: uppercase; letter-spacing: -0.01em; margin-top: -4px;">BUILDER</span>
+      </div>
+      <div class="cert-org-sub">Official Result Portal</div>
+    </div>
+    <div class="cert-year-tag">Session 2025–26</div>
+  </div>
+  
+  <div class="cert-content">
+    <div class="cert-left-col">
+      <div class="cert-identity">
+        <div class="cert-id-info">
+          <div class="cert-student-name" id="res-student-name">{{ student[2] if student else "" }}</div>
+          <div class="cert-exam-roll">
+            <span class="badge-roll">Exam No</span>
+            <strong id="res-exam-roll">{{ student[1] if student else "" }}</strong>
+          </div>
+          <div class="cert-exam-roll" style="margin-top: 6px;">
+            <span class="badge-roll">School Roll No</span>
+            <strong id="res-school-roll">{{ student[6] if student else "" }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="cert-details-container">
+        <div class="mini-detail">
+          <label>School</label>
+          <div id="res-school">{{ student[3] if student else "" }}</div>
+        </div>
+        <div class="mini-detail-row">
+          <div class="mini-detail">
+            <label>Standard</label>
+            <div id="res-std">{{ student[4] if student else "" }}</div>
+          </div>
+          <div class="mini-detail">
+            <label>Division</label>
+            <div id="res-div">{{ student[5] if student else "" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cert-right-col">
+      <div class="cert-sub-scores">
+        <div class="cert-sub-score-card">
+          <div class="cert-sub-score-label">MCQ Total Marks</div>
+          <div class="cert-sub-score-value" id="res-mcq-total">{{ student[38] if student else "—" }}</div>
+        </div>
+        <div class="cert-sub-score-card">
+          <div class="cert-sub-score-label">Essay Marks</div>
+          <div class="cert-sub-score-value" id="res-essay">{{ student[39] if student else "—" }}</div>
+        </div>
+      </div>
+      <div class="cert-score-block">
+        <div class="cert-score-label">Total Score</div>
+        <div class="cert-score-value" id="res-total">{{ student[40] if student else "—" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cert-bottom-row">
+    <div class="cert-subjects-heading">Detailed Evaluation</div>
+    <div class="cs-grid">
+      {% set mark_cols = [41, 42, 43, 44, 45, 46, 47, 48, 49] %}
+      {% set subjects = [
+        ('પબ્લિક એડમિનિસ્ટ્રેશન', 'res-ap'),
+        ('બિઝનેસ એન્ડ સ્ટાર્ટઅપ', 'res-aq'),
+        ('AI એન્ડ ટેકનોલોજી', 'res-ar'),
+        ('એથિકલ વેલ્યુઝ', 'res-as'),
+        ('ઇન્ટરનેશનલ રિલેશન', 'res-at'),
+        ('એન્વાયર્નમેન્ટ એન્ડ એગ્રીકલ્ચર', 'res-au'),
+        ('કલ્ચર', 'res-av'),
+        ('સ્પોર્ટ્સ', 'res-aw'),
+        ('વિઝનરી થિંકિંગ', 'res-ax')
+      ] %}
+      
+      {% for sub_name, sub_id in subjects %}
+        {% set mark = student[mark_cols[loop.index0]] if student else "" %}
+        {% set mark_val = mark | float if mark != "" else -1 %}
+        {% set color_class = "" %}
+        {% if mark_val != -1 %}
+          {% if mark_val <= 20 %}{% set color_class = "cs-maroon" %}
+          {% elif mark_val <= 40 %}{% set color_class = "cs-darkorange" %}
+          {% elif mark_val <= 60 %}{% set color_class = "cs-lightyellow" %}
+          {% elif mark_val <= 80 %}{% set color_class = "cs-darkgreen" %}
+          {% else %}{% set color_class = "cs-brightgreen" %}{% endif %}
+        {% endif %}
+        <div class="cs-row {{ color_class }}">
+          <span>{{ sub_name }}</span>
+        <strong id="{{ sub_id }}">{{ mark if mark != "" else "—" }}{% if mark != "" %}%{% endif %}</strong>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="quote-container">
+    <div class="quote-text">Courage to accept and dedication to improve are the two mantras of success. Make this experience your strength, you have to win in Season 2, right?!</div>
+  </div>
+
+  <div class="cert-footer">
+    <span class="result-badge">Official Result</span>
+    <span class="cert-footer-text">Nation Builder Program • Verified Authentication</span>
+  </div>
+</div>
+
+<div class="result-actions no-print" style="margin-top: 40px; display: flex; gap: 20px; justify-content: center;">
+    <button class="btn btn-download" onclick="downloadPdf()" style="max-width: 250px;">⬇ Download Official PDF</button>
+    <a href="/" class="btn btn-outline" style="max-width: 250px; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">↺ Check Another Result</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/result.js"></script>
+{% endblock %}

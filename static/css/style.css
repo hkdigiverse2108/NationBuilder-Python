@@ -1,0 +1,184 @@
+:root {
+  --navy:        #061021;
+  --navy-mid:    #0B1B36;
+  --saffron:     #D4AF37; 
+  --saffron-lt:  #F3E5AB;
+  --bg:          #F7F6F2;
+  --white:       #FFFFFF;
+  --text-dark:   #0F172A;
+  --text-soft:   #64748B;
+  --border:      #E4E1D7;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-dark);
+}
+
+.app-wrapper { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+.site-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 40px; }
+
+/* Circular badge logo matching the brand */
+.logo-badge {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #e0e0e0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.logo-nation {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #FF6B00;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  display: block;
+}
+.logo-builder {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #1A237E;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  display: block;
+  margin-top: -3px;
+}
+.logo-text-block { display: flex; flex-direction: column; }
+.logo-main { font-family: 'DM Sans', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--navy); display: block; }
+.logo-sub { font-size: 0.8rem; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; display: block; }
+
+.step-nav { padding: 30px 0; margin-bottom: 20px; }
+.nav-content { max-width: 500px; margin: 0 auto; display: flex; justify-content: center; gap: 15px; }
+.nav-step { 
+  color: var(--text-soft); 
+  font-size: 0.85rem; 
+  font-weight: 600; 
+  padding: 8px 20px; 
+  border: 1.5px solid var(--border); 
+  border-radius: 50px; 
+  background: white;
+  transition: all 0.3s ease;
+}
+.nav-step.active { 
+  color: var(--saffron); 
+  background: var(--navy); 
+  border-color: var(--navy); 
+  box-shadow: 0 4px 12px rgba(6, 16, 33, 0.2);
+}
+
+.card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); max-width: 500px; margin: 0 auto; }
+.card-header { text-align: center; margin-bottom: 30px; }
+.card-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 8px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; color: var(--text-soft); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 1rem; }
+.btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+.btn-primary { background: var(--navy); color: white; }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+
+/* CERTIFICATE */
+.cert-wrapper { background: white; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+.cert-header { background: var(--navy); color: white; padding: 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--saffron); }
+.cert-org-name { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--saffron); }
+.cert-content { display: grid; grid-template-columns: 1fr 1fr; }
+.cert-left-col { padding: 40px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
+.cert-right-col { padding: 40px; background: #FAFAFA; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+.badge-roll { background: var(--saffron-lt); color: var(--navy); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-right: 8px; }
+.cert-exam-roll { font-size: 1.1rem; color: var(--text-soft); }
+.cert-student-name { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--navy); margin-bottom: 5px; }
+
+.cert-details-container { margin-top: 30px; display: flex; flex-direction: column; gap: 20px; }
+.mini-detail-row { display: flex; gap: 40px; }
+.mini-detail label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: var(--text-soft); margin-bottom: 6px; }
+.mini-detail div { font-size: 1.1rem; font-weight: 600; color: var(--navy); }
+
+.cert-sub-scores { display: flex; gap: 12px; width: 100%; margin-bottom: 16px; }
+.cert-sub-score-card { flex: 1; background: var(--navy-mid); border: 1px solid var(--saffron); border-radius: 10px; padding: 16px 12px; text-align: center; }
+.cert-sub-score-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--saffron); font-weight: 700; margin-bottom: 8px; }
+.cert-sub-score-value { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--white); font-weight: 900; line-height: 1; }
+
+.cert-score-block { background: var(--navy); color: white; padding: 40px; text-align: center; border-radius: 12px; width: 100%; border: 1px solid var(--saffron); box-shadow: 0 10px 30px rgba(6, 16, 33, 0.15); }
+.cert-score-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 20px; color: var(--saffron); font-weight: 700; }
+.cert-score-value { font-family: 'Playfair Display', serif; font-size: 4.5rem; color: var(--white); font-weight: 900; line-height: 1; }
+
+.quote-container { 
+  padding: 30px 40px; 
+  background: linear-gradient(to right, rgba(212, 175, 55, 0.1), white); 
+  border-left: 6px solid var(--saffron); 
+  border-top: 1px solid var(--border);
+  text-align: center; 
+}
+.quote-text { 
+  font-size: 1.2rem; 
+  font-weight: 700; 
+  color: var(--navy); 
+  line-height: 1.6; 
+  font-style: italic;
+}
+
+.cert-footer { padding: 25px 40px; background: var(--bg); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.result-badge { background: var(--navy); color: var(--saffron); padding: 6px 18px; border-radius: 50px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
+.cert-footer-text { font-size: 0.8rem; color: var(--text-soft); font-weight: 500; }
+
+.btn-download { background: var(--navy); color: var(--white); border: 2px solid var(--navy); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-download:hover { background: transparent; color: var(--navy); }
+.btn-outline { background: transparent; color: var(--navy); border: 2px solid var(--border); transition: 0.3s; }
+.btn-outline:hover { border-color: var(--navy); background: rgba(6,16,33,0.02); }
+
+.cert-bottom-row { padding: 40px; border-top: 1px solid var(--border); }
+.cert-subjects-heading { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; color: var(--text-soft); margin-bottom: 25px; }
+.cs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; align-items: stretch; }
+.cs-row { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  padding: 18px 15px; 
+  border-radius: 8px; 
+  font-weight: 700; 
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--navy);
+  font-size: 0.85rem;
+  min-height: 80px;
+}
+.cs-row span { opacity: 0.9; font-weight: 600; font-size: 1.25rem; font-family: 'Noto Sans Gujarati', 'DM Sans', sans-serif; }
+.cs-row strong { font-size: 1.1rem; }
+
+/* TOPIC COLORS - SOLID FLAT */
+.cs-maroon { background: #b91c1c !important; color: white !important; }
+.cs-darkorange { background: #ea580c !important; color: white !important; }
+.cs-lightyellow { background: #ca8a04 !important; color: white !important; }
+.cs-darkgreen { background: #059669 !important; color: white !important; }
+.cs-brightgreen { background: #16a34a !important; color: white !important; }
+
+.hidden { display: none !important; }
+.no-print { display: flex; }
+@page { size: A4 portrait; margin: 0.5cm; }
+@media print {
+  .no-print { display: none !important; }
+  .app-wrapper { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .cert-wrapper { 
+    box-shadow: none; 
+    border: 2px solid var(--navy) !important; 
+    width: 21cm; /* Standard A4 Width */
+    height: 29.7cm; /* Standard A4 Height */
+    margin: 0 auto;
+    page-break-after: always;
+  }
+  .cert-header, .cs-row, .cert-score-block, .cert-sub-score-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

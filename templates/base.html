@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}BharatExamFest — Student Result Portal{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Noto+Sans+Gujarati:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css?v=4" />
+  {% if inlined_css %}
+  <meta id="inlined-css-data" content="{{ inlined_css | e }}" />
+  <script>
+    (function(){
+      var el = document.getElementById('inlined-css-data');
+      if (el) {
+        var s = document.createElement('style');
+        s.textContent = el.getAttribute('content');
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+  {% endif %}
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="app-wrapper">
+    <header class="site-header no-print">
+      <a href="/" style="text-decoration: none; display: flex; align-items: center; gap: 16px;">
+        <!-- Circular badge logo -->
+        <div class="logo-badge">
+          <span class="logo-nation">NATION</span>
+          <span class="logo-builder">BUILDER</span>
+        </div>
+        <!-- Text beside badge -->
+        <div class="logo-text-block">
+          <span class="logo-main">Nation Builder</span>
+          <span class="logo-sub">Student Result Portal</span>
+        </div>
+      </a>
+    </header>
+
+    {% block progress_bar %}
+    <nav class="step-nav no-print">
+      <div class="nav-content">
+        <div class="nav-step {% if active_step == 1 %}active{% endif %}">Identify</div>
+        <div class="nav-step {% if active_step == 2 %}active{% endif %}">Verify</div>
+        <div class="nav-step {% if active_step == 3 %}active{% endif %}">Result</div>
+      </div>
+    </nav>
+    {% endblock %}
+
+    <main class="pages-container">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BharatExamFest — Student Result Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="app-wrapper">
+    <header class="site-header">
+      <div class="logo-block">
+        <span class="logo-main">Nation Builder</span>
+        <span class="logo-sub">Student Result Portal</span>
+      </div>
+    </header>
+
+    <div class="progress-bar-container" id="progress-bar">
+      <div class="progress-step" id="step-1">1 <span class="step-label">Identify</span></div>
+      <div class="progress-step" id="step-2">2 <span class="step-label">Verify</span></div>
+      <div class="progress-step" id="step-3">3 <span class="step-label">Result</span></div>
+    </div>
+
+    <main class="pages-container">
+      <!-- PAGE 1: IDENTIFY -->
+      <div class="page active" id="page-1">
+        <div class="card">
+          <div class="card-header">
+            <h1 class="card-title">Find Your Result</h1>
+            <p class="card-subtitle">Enter your registration details</p>
+          </div>
+          <form id="identify-form">
+            <div class="form-group">
+              <label>School</label>
+              <select id="school-select" required><option value="">— Select School —</option></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Standard</label>
+                <select id="std-select" required><option value="">— Standard —</option></select>
+              </div>
+              <div class="form-group">
+                <label>Division</label>
+                <select id="div-select" required><option value="">— Div —</option></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Roll Number</label>
+              <input type="number" id="roll-input" required />
+            </div>
+            <div id="p1-error" class="error-msg hidden"></div>
+            <button type="submit" class="btn btn-primary" id="find-btn">Find My Result</button>
+          </form>
+          <div id="student-found-card" class="hidden">
+            <p>We found: <strong id="found-name"></strong></p>
+            <button class="btn btn-primary" onclick="goToPage2()">Yes, Continue →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 2: VERIFY -->
+      <div class="page" id="page-2">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Verify Identity</h2>
+            <p id="p2-student-name-banner"></p>
+          </div>
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="tel" id="phone-input" maxlength="10" placeholder="10-digit number" />
+          </div>
+          <button class="btn btn-primary" id="send-otp-btn" onclick="sendOtp()">Send OTP</button>
+          <div id="otp-section" class="hidden">
+            <p>OTP sent to <strong id="sms-sent-number"></strong></p>
+            <div class="form-group">
+              <label>Enter OTP</label>
+              <input type="text" id="otp-input" maxlength="6" />
+            </div>
+            <div id="otp-error" class="error-msg hidden"></div>
+            <button class="btn btn-primary" onclick="verifyOtp()">Verify OTP</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 3: RESULT -->
+      <div class="page" id="page-3">
+        <div class="cert-wrapper" id="result-printable">
+          <div class="cert-header">
+            <div>
+              <div class="cert-org-name">Nation Builder</div>
+              <div class="cert-org-sub">Official Result Portal</div>
+            </div>
+            <div class="cert-year-tag">Session 2025–26</div>
+          </div>
+          <div id="congrats-banner" class="hidden">🏆 Congratulations! You're in the Top 10!</div>
+          <div class="cert-content">
+            <div class="cert-left-col">
+              <div class="cert-identity">
+                <div class="result-avatar" id="result-avatar-initials"></div>
+                <div>
+                  <div class="cert-student-name" id="res-student-name"></div>
+                  <div class="cert-exam-roll">Roll No: <strong id="res-exam-roll"></strong></div>
+                </div>
+              </div>
+              <div class="cert-details-grid">
+                <div class="cert-detail-row"><span class="cd-label">School</span> <span class="cd-value" id="res-school"></span></div>
+                <div class="cert-detail-row"><span class="cd-label">Standard</span> <span class="cd-value" id="res-std"></span></div>
+                <div class="cert-detail-row"><span class="cd-label">Division</span> <span class="cd-value" id="res-div"></span></div>
+              </div>
+            </div>
+            <div class="cert-right-col">
+              <div class="cert-score-block">
+                <div class="cert-score-label">Total Score</div>
+                <div class="cert-score-value" id="res-total">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="cert-bottom-row">
+            <div class="cert-subjects-heading">Detailed Evaluation</div>
+            <div class="cs-grid">
+              <div class="cs-row"><span>Public Administration</span><strong id="res-ap"></strong></div>
+              <div class="cs-row"><span>Business & Startups</span><strong id="res-aq"></strong></div>
+              <div class="cs-row"><span>AI & Technology</span><strong id="res-ar"></strong></div>
+              <div class="cs-row"><span>Ethical & Moral Values</span><strong id="res-as"></strong></div>
+              <div class="cs-row"><span>International Relation</span><strong id="res-at"></strong></div>
+              <div class="cs-row"><span>Environment & Agriculture</span><strong id="res-au"></strong></div>
+              <div class="cs-row"><span>Culture</span><strong id="res-av"></strong></div>
+              <div class="cs-row"><span>Sports</span><strong id="res-aw"></strong></div>
+              <div class="cs-row"><span>Visionary Thinking</span><strong id="res-ax"></strong></div>
+            </div>
+          </div>
+          <div class="cert-footer">
+            <span class="result-badge">Official Result</span>
+            <span class="cert-footer-text">Nation Builder Program</span>
+          </div>
+        </div>
+        <div class="result-actions no-print">
+          <button class="btn btn-download" onclick="downloadResultPDF()">⬇ Download PDF</button>
+          <button class="btn btn-outline" onclick="checkAnotherResult()">↺ Check Another</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/static/js/app.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set active_step = 1 %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Find Your Result</h1>
+    <p class="card-subtitle">Enter your registration details</p>
+  </div>
+  <form id="identify-form">
+    <div class="form-group">
+      <label>School</label>
+      <select id="school-select" required><option value="">— Select School —</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Standard</label>
+        <select id="std-select" required><option value="">— Standard —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Division</label>
+        <select id="div-select" required><option value="">— Div —</option></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Roll Number</label>
+      <input type="number" id="roll-input" required />
+    </div>
+    <div id="p1-error" class="error-msg hidden"></div>
+    <button type="submit" class="btn btn-primary" id="find-btn">Find My Result</button>
+  </form>
+  <div id="student-found-card" class="hidden" style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+    <p style="margin-bottom: 20px;">We found: <strong id="found-name" style="color: var(--navy);"></strong></p>
+    <button class="btn btn-primary" id="continue-to-verify">Yes, Continue →</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/identify.js"></script>
+{% endblock %}
