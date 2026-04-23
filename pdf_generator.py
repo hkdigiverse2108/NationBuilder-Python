@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 def generate_pdf(input_file, output_file):
@@ -16,10 +17,9 @@ def generate_pdf(input_file, output_file):
             
             page = browser.new_page()
             
-            # Load the local HTML file
-            # Using 'file://' with absolute path is the most robust way
-            abs_path = os.path.abspath(input_file)
-            page.goto(f"file:///{abs_path}", wait_until="load")
+            # Using pathlib's as_uri() is the most robust cross-platform way to generate file:// URLs
+            file_url = Path(input_file).resolve().as_uri()
+            page.goto(file_url, wait_until="load")
             
             # Small wait for any JS/fonts
             page.wait_for_timeout(2000)

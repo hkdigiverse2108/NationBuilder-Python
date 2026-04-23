@@ -510,6 +510,7 @@ async def api_download_result_pdf(request: Request):
 if __name__ == "__main__":
     import uvicorn
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-    host = os.getenv("HOST", "")
-    port = int(os.getenv("PORT", ""))
+    host = os.environ["HOST"]
+    port = int(os.environ["PORT"])
     uvicorn.run("app:app", host=host, port=port, reload=debug_mode)
+    
