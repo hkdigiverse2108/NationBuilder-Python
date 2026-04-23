@@ -74,23 +74,36 @@ def get_gsheet_client():
     return gspread.authorize(creds)
 
 # ---------------------------------------------------------------------------
-# Helper: Load data from Google Sheets
+# Helper: Load data from Google Sheets (with in-memory cache, TTL = 5 min)
 # ---------------------------------------------------------------------------
+import time as _time
+_sheet_cache = {"df": None, "ts": 0.0}
+CACHE_TTL = 300  # seconds
+
 def load_data():
+    now = _time.time()
+    if _sheet_cache["df"] is not None and (now - _sheet_cache["ts"]) < CACHE_TTL:
+        print("[Cache] Serving data from in-memory cache.")
+        return _sheet_cache["df"]
     try:
+        print("[Cache] Fetching fresh data from Google Sheets...")
         client = get_gsheet_client()
         sheet = client.open_by_key(GSHEET_ID).sheet1
-        # Use get_all_values and convert to DataFrame to match previous structure
         data = sheet.get_all_values()
         if not data: return None
-        
         headers = data[0]
         rows = data[1:]
         df = pd.DataFrame(rows, columns=headers)
         df = df.fillna("")
+        _sheet_cache["df"] = df
+        _sheet_cache["ts"] = now
+        print(f"[Cache] Loaded {len(rows)} rows. Cache valid for {CACHE_TTL}s.")
         return df
     except Exception as e:
         print(f"Error loading Google Sheet: {e}")
+        if _sheet_cache["df"] is not None:
+            print("[Cache] Returning stale cache due to error.")
+            return _sheet_cache["df"]  # Serve stale data rather than failing
         return None
 
 # ---------------------------------------------------------------------------
@@ -100,11 +113,10 @@ MAX_RESULTS_PER_PHONE = 5
 
 def check_phone_limit(phone: str, current_student_idx: int) -> tuple:
     """
-    Returns (is_blocked: bool, linked_count: int).
-    - is_blocked = True if phone already accessed 5 different students AND
-      the current student is NOT one of them (i.e., this is a new / 6th student).
-    - Repeat access to an already-verified student is always allowed.
-    - On any error, returns (False, 0) so legitimate users are never blocked.
+    Returns (is_blocked: bool, is_already_linked: bool, linked_count: int).
+    - is_already_linked = True if this phone is already saved for THIS specific student.
+    - is_blocked = True if phone reached the 5-student limit AND current student is new.
+    - On any error, returns (False, False, 0) so legitimate users are never blocked.
     """
     try:
         client = get_gsheet_client()
@@ -112,7 +124,7 @@ def check_phone_limit(phone: str, current_student_idx: int) -> tuple:
 
         headers = sheet.row_values(1)
         if "Phone Number" not in headers:
-            return False, 0  # Column not yet created — no restriction
+            return False, False, 0  # Column not yet created — no restriction
 
         col_idx = headers.index("Phone Number") + 1
         # Fetch entire column, skip header row
@@ -131,21 +143,21 @@ def check_phone_limit(phone: str, current_student_idx: int) -> tuple:
         count = len(linked_rows)
         print(f"[Limit] Phone {phone} is linked to {count} student(s). Current student idx: {current_student_idx}")
 
-        # If this student was already verified by this phone — allow repeat access
+        # If this phone is already linked to THIS specific student — fast-access, no OTP needed
         if current_student_idx in linked_rows:
-            print(f"[Limit] Repeat access — allowing.")
-            return False, count
+            print(f"[Limit] Phone already verified for this student — fast access granted.")
+            return False, True, count
 
         # New student — block if limit reached
         if count >= MAX_RESULTS_PER_PHONE:
             print(f"[Limit] Blocked — limit of {MAX_RESULTS_PER_PHONE} reached.")
-            return True, count
+            return True, False, count
 
-        return False, count
+        return False, False, count
 
     except Exception as e:
         print(f"[Limit] Error checking phone limit: {e}")
-        return False, 0  # Fail open so legitimate users aren't blocked by a GSheets error
+        return False, False, 0  # Fail open so legitimate users aren't blocked by a GSheets error
 
 # ---------------------------------------------------------------------------
 # Helper: Load / save daily SMS counters from disk
@@ -270,10 +282,11 @@ async def get_current_student(request: Request):
     idx = request.session.get("student_idx")
     if idx is None:
         raise HTTPException(status_code=401, detail="No student selected")
-    
+
+    # load_data() is now in-memory cached — this is fast after the first call
     df = load_data()
     if df is None: raise HTTPException(status_code=500)
-    
+
     row = df.iloc[idx].tolist()
     return {"student": row, "row_index": idx}
 
@@ -304,17 +317,28 @@ async def api_send_otp(body: SendOtpRequest, request: Request):
     if not phone.isdigit() or len(phone) != 10 or phone[0] not in "6789":
         raise HTTPException(status_code=400, detail="Invalid mobile number")
 
-    # Check per-phone access limit before wasting an SMS credit
     student_idx = request.session.get("student_idx")
+
     if student_idx is not None:
-        is_blocked, linked_count = check_phone_limit(phone, student_idx)
+        is_blocked, is_already_linked, linked_count = check_phone_limit(phone, student_idx)
+
+        # FAST ACCESS: Phone already verified for this exact student — skip OTP entirely
+        if is_already_linked:
+            print(f"[FastAccess] Phone {phone} already verified for student {student_idx}. Bypassing OTP.")
+            request.session["is_verified"] = True
+            request.session["can_access_result"] = True
+            # NOTE: We do NOT store student row in session — cookie has a 4KB limit.
+            # load_data() is now cached in memory so the result page will load instantly.
+            return {"success": True, "already_verified": True}
+
+        # LIMIT CHECK: Block if this phone has already accessed 5 different students
         if is_blocked:
             raise HTTPException(
                 status_code=429,
                 detail=f"Access limit reached. One mobile number can only be used to view results for up to {MAX_RESULTS_PER_PHONE} students."
             )
 
-    # Generate a 6-digit OTP and store it
+    # NEW ACCESS: Send OTP via SMS
     otp = str(random.randint(100000, 999999))
     otp_store[phone] = otp
 
@@ -325,7 +349,7 @@ async def api_send_otp(body: SendOtpRequest, request: Request):
     if not success:
         raise HTTPException(status_code=502, detail="Failed to send SMS. Please try again.")
 
-    return {"success": True, "message": f"OTP sent to +91-{phone}"}
+    return {"success": True, "already_verified": False, "message": f"OTP sent to +91-{phone}"}
 
 # ---------------------------------------------------------------------------
 # API: verify OTP and save phone to CSV on success
@@ -486,4 +510,6 @@ async def api_download_result_pdf(request: Request):
 if __name__ == "__main__":
     import uvicorn
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=debug_mode)
+    host = os.getenv("HOST", "")
+    port = int(os.getenv("PORT", ""))
+    uvicorn.run("app:app", host=host, port=port, reload=debug_mode)

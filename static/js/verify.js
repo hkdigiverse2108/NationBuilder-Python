@@ -22,9 +22,16 @@ document.getElementById('send-otp-btn').onclick = async () => {
     });
     
     if (res.ok) {
-        document.getElementById('otp-section').classList.remove('hidden');
-        document.getElementById('sms-sent-number').textContent = phone;
-        document.getElementById('send-otp-btn').textContent = "Resend OTP";
+        const data = await res.json();
+        if (data.already_verified) {
+            // Returning user — phone already verified for this student, go straight to result
+            window.location.href = "/result";
+        } else {
+            // New access — show OTP input
+            document.getElementById('otp-section').classList.remove('hidden');
+            document.getElementById('sms-sent-number').textContent = phone;
+            document.getElementById('send-otp-btn').textContent = "Resend OTP";
+        }
     } else {
         const errorData = await res.json().catch(() => ({}));
         const msg = errorData.detail || "Failed to send OTP. Please try again.";
