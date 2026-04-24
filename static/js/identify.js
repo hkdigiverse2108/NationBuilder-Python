@@ -13,14 +13,11 @@ function populateDropdowns() {
     const divSelect = document.getElementById('div-select');
 
     const dummySchools = [
-        "Ashadeep Vidhyalay: Several branches including Nana Varachha.",
-        "Shree Swaminarayan Gurukul Vidhyalaya: Nani Ved.",
-        "Little Millennium: Varachha.",
-        "Sunrise Global School",
-        "P.P. Savani Chaitanya Vidya",
-        "Tapti Valley International School",
-        "J H Ambani Saraswati Vidya Mandir",
-        "Maharaja Agrasen International School"
+        "Cygnus World School",
+        "Vatsalya International School",
+        "Delhi Public School",
+        "Swayam Cambridge International School",
+        "Gangotri International School"
     ];
     
     let schools = [...new Set(allRows.map(r => r[3]))].filter(s => s && String(s).trim());
