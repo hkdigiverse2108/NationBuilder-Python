@@ -32,7 +32,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Initialize Templates
 templates = Jinja2Templates(directory="templates")
-# CSV / Google Sheets Configuration
+# Google Sheets Configuration
 GSHEET_ID = os.getenv("GSHEET_ID", "1vlL61b-u3r8eJ9JQDNdfSBFz3JrkuER_pW2AUjfpw30")
 GOOGLE_CREDENTIALS_PATH = os.getenv("GOOGLE_CREDENTIALS_PATH", "google_credentials.json")
 
@@ -291,13 +291,13 @@ async def get_current_student(request: Request):
     return {"student": row, "row_index": idx}
 
 # ---------------------------------------------------------------------------
-# API: fetch all students from local CSV
+# API: fetch all students from Google Sheets
 # ---------------------------------------------------------------------------
 @app.get("/api/students")
 async def get_students():
     df = load_data()
     if df is None:
-        raise HTTPException(status_code=500, detail="Local student data file not found or invalid")
+        raise HTTPException(status_code=500, detail="Google Sheets data could not be loaded")
 
     rows = df.values.tolist()
     return {
@@ -352,7 +352,7 @@ async def api_send_otp(body: SendOtpRequest, request: Request):
     return {"success": True, "already_verified": False, "message": f"OTP sent to +91-{phone}"}
 
 # ---------------------------------------------------------------------------
-# API: verify OTP and save phone to CSV on success
+# API: verify OTP and save phone to Google Sheets on success
 # ---------------------------------------------------------------------------
 @app.post("/api/verify-otp")
 async def api_verify_otp(body: VerifyOtpRequest, request: Request):
@@ -432,7 +432,7 @@ async def api_download_result_pdf(request: Request):
 
     # 1. Load the student data for rendering
     df = load_data()
-    if df is None: raise HTTPException(status_code=500, detail="CSV not found")
+    if df is None: raise HTTPException(status_code=500, detail="Google Sheet data could not be loaded")
     student_data = df.iloc[idx].tolist()
 
     # 2. Load CSS content for inlining (optional but better for standalone rendering)
