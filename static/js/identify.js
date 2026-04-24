@@ -12,7 +12,20 @@ function populateDropdowns() {
     const stdSelect = document.getElementById('std-select');
     const divSelect = document.getElementById('div-select');
 
-    const schools = [...new Set(allRows.map(r => r[3]))].filter(s => s && String(s).trim()).sort();
+    const dummySchools = [
+        "Ashadeep Vidhyalay: Several branches including Nana Varachha.",
+        "Shree Swaminarayan Gurukul Vidhyalaya: Nani Ved.",
+        "Little Millennium: Varachha.",
+        "Sunrise Global School",
+        "P.P. Savani Chaitanya Vidya",
+        "Tapti Valley International School",
+        "J H Ambani Saraswati Vidya Mandir",
+        "Maharaja Agrasen International School"
+    ];
+    
+    let schools = [...new Set(allRows.map(r => r[3]))].filter(s => s && String(s).trim());
+    schools = [...new Set([...schools, ...dummySchools])].sort();
+    
     schools.forEach(s => {
         const opt = document.createElement('option');
         opt.value = opt.textContent = s;

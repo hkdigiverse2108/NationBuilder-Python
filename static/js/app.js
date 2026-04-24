@@ -23,7 +23,18 @@ async function init() {
 }
 
 function populateDropdowns() {
-  const schools = [...new Set(state.allRows.map(r => r[3]))].sort();
+  const dummySchools = [
+    "Ashadeep Vidhyalay: Several branches including Nana Varachha.",
+    "Shree Swaminarayan Gurukul Vidhyalaya: Nani Ved.",
+    "Little Millennium: Varachha.",
+    "Sunrise Global School",
+    "P.P. Savani Chaitanya Vidya",
+    "Tapti Valley International School",
+    "J H Ambani Saraswati Vidya Mandir",
+    "Maharaja Agrasen International School"
+  ];
+  let schools = [...new Set(state.allRows.map(r => r[3]))].filter(s => s && String(s).trim());
+  schools = [...new Set([...schools, ...dummySchools])].sort();
   const schoolSelect = document.getElementById('school-select');
   schools.forEach(s => {
     const opt = document.createElement('option');
