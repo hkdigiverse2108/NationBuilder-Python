@@ -51,16 +51,16 @@
       <div class="cert-sub-scores">
         <div class="cert-sub-score-card">
           <div class="cert-sub-score-label">MCQ Total Marks</div>
-          <div class="cert-sub-score-value" id="res-mcq-total">{{ student[38] if student else "—" }}</div>
+          <div class="cert-sub-score-value" id="res-mcq-total">{{ (student[38] | float | round(2)) if student and student[38] != "" else "—" }}</div>
         </div>
         <div class="cert-sub-score-card">
           <div class="cert-sub-score-label">Essay Marks</div>
-          <div class="cert-sub-score-value" id="res-essay">{{ student[39] if student else "—" }}</div>
+          <div class="cert-sub-score-value" id="res-essay">{{ (student[39] | float | round(2)) if student and student[39] != "" else "—" }}</div>
         </div>
       </div>
       <div class="cert-score-block">
         <div class="cert-score-label">Total Score</div>
-        <div class="cert-score-value" id="res-total">{{ student[40] if student else "—" }}</div>
+        <div class="cert-score-value" id="res-total">{{ (student[40] | float | round(2)) if student and student[40] != "" else "—" }}</div>
       </div>
     </div>
   </div>
@@ -94,7 +94,7 @@
         {% endif %}
         <div class="cs-row {{ color_class }}">
           <span>{{ sub_name }}</span>
-        <strong id="{{ sub_id }}">{{ mark if mark != "" else "—" }}{% if mark != "" %}%{% endif %}</strong>
+        <strong id="{{ sub_id }}">{{ (mark | float | round(2)) if mark != "" else "—" }}{% if mark != "" %}%{% endif %}</strong>
         </div>
       {% endfor %}
     </div>

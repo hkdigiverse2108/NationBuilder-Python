@@ -55,6 +55,19 @@ def load_data():
             print(f"[Data] Loading from CSV: {CSV_DATA_PATH}")
             df = pd.read_csv(CSV_DATA_PATH)
             df = df.fillna("")
+
+            # Clean numeric columns that Pandas might read as floats (e.g., 6.0 -> 6)
+            def clean_numeric(val):
+                s = str(val).strip()
+                if s.endswith(".0"):
+                    return s[:-2]
+                return s
+
+            numeric_cols = ["Std.", "Roll No.", "Exam Roll Number"]
+            for col in numeric_cols:
+                if col in df.columns:
+                    df[col] = df[col].apply(clean_numeric)
+
             # Clean school names
             if "School Name" in df.columns:
                 df["School Name"] = df["School Name"].astype(str).str.strip()
@@ -71,6 +84,19 @@ def load_data():
             print(f"[Cache] Falling back to JSON cache: {CACHE_FILE}")
             df = pd.read_json(CACHE_FILE, orient="split")
             df = df.fillna("")
+
+            # Clean numeric columns (e.g., 6.0 -> 6)
+            def clean_numeric(val):
+                s = str(val).strip()
+                if s.endswith(".0"):
+                    return s[:-2]
+                return s
+
+            numeric_cols = ["Std.", "Roll No.", "Exam Roll Number"]
+            for col in numeric_cols:
+                if col in df.columns:
+                    df[col] = df[col].apply(clean_numeric)
+
             _data_cache["df"] = df
             _data_cache["ts"] = now
             return df
