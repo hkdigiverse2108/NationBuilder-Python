@@ -23,15 +23,11 @@ async function init() {
 }
 
 function populateDropdowns() {
-  const dummySchools = [
-    "Cygnus World School",
-    "Vatsalya International School",
-    "Delhi Public School",
-    "Swayam Cambridge International School",
-    "Gangotri International School"
-  ];
-  let schools = [...new Set(state.allRows.map(r => r[3]))].filter(s => s && String(s).trim());
-  schools = [...new Set([...schools, ...dummySchools])].sort();
+  let schools = [...new Set(state.allRows.map(r => r[3]))]
+    .map(s => String(s).trim())
+    .filter(s => s && s !== "nan");
+  schools = [...new Set(schools)].sort();
+  
   const schoolSelect = document.getElementById('school-select');
   schools.forEach(s => {
     const opt = document.createElement('option');

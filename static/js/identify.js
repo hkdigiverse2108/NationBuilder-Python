@@ -12,16 +12,10 @@ function populateDropdowns() {
     const stdSelect = document.getElementById('std-select');
     const divSelect = document.getElementById('div-select');
 
-    const dummySchools = [
-        "Cygnus World School",
-        "Vatsalya International School",
-        "Delhi Public School",
-        "Swayam Cambridge International School",
-        "Gangotri International School"
-    ];
-    
-    let schools = [...new Set(allRows.map(r => r[3]))].filter(s => s && String(s).trim());
-    schools = [...new Set([...schools, ...dummySchools])].sort();
+    let schools = [...new Set(allRows.map(r => r[3]))]
+        .map(s => String(s).trim())
+        .filter(s => s && s !== "nan");
+    schools = [...new Set(schools)].sort();
     
     schools.forEach(s => {
         const opt = document.createElement('option');
@@ -60,13 +54,13 @@ document.getElementById('identify-form').onsubmit = (e) => {
         document.getElementById('student-found-card').classList.remove('hidden');
         document.getElementById('p1-error').classList.add('hidden');
         
-        document.getElementById('continue-to-verify').onclick = async () => {
+        document.getElementById('view-result-btn').onclick = async () => {
             const selectRes = await fetch("/api/select-student", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ row_index: idx })
             });
-            if (selectRes.ok) window.location.href = "/verify";
+            if (selectRes.ok) window.location.href = "/result";
         };
     } else {
         document.getElementById('p1-error').textContent = "Student not found. Please verify details.";
