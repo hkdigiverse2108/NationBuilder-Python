@@ -44,6 +44,16 @@ document.getElementById('identify-form').onsubmit = (e) => {
     const std = document.getElementById('std-select').value;
     const div = document.getElementById('div-select').value;
     const roll = document.getElementById('roll-input').value;
+    const phone = document.getElementById('phone-input').value;
+
+    // Phone validation: 10 digits, starts with 6,7,8,9
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+        const errorEl = document.getElementById('p1-error');
+        errorEl.textContent = "Invalid mobile number. It must be 10 digits and start with 6, 7, 8, or 9.";
+        errorEl.classList.remove('hidden');
+        return;
+    }
 
     const idx = allRows.findIndex(r => 
         r[3] === school && String(r[4]) === std && r[5] === div && String(r[6]) === roll
@@ -55,6 +65,18 @@ document.getElementById('identify-form').onsubmit = (e) => {
         document.getElementById('p1-error').classList.add('hidden');
         
         document.getElementById('view-result-btn').onclick = async () => {
+            // Save number to backend
+            await fetch("/api/save-number", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: allRows[idx][2],
+                    phone: phone,
+                    roll_no: allRows[idx][1],
+                    school: allRows[idx][3]
+                })
+            });
+
             const selectRes = await fetch("/api/select-student", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

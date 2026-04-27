@@ -9,7 +9,7 @@ import asyncio
 import subprocess
 import tempfile
 from datetime import date
-from fastapi import FastAPI, Request, HTTPException, Depends, Query
+from fastapi import FastAPI, Request, HTTPException, Depends, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -23,6 +23,14 @@ app = FastAPI(title="BharatExamFest Result Portal")
 
 # Add Session Middleware
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "nation-builder-secret-key-2025"))
+
+# ---------------------------------------------------------------------------
+# Admin Security Dependency
+# ---------------------------------------------------------------------------
+def is_admin(request: Request):
+    if not request.session.get("is_admin"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return True
 
 
 # Mount Static Files
@@ -40,6 +48,17 @@ import time as _time
 _data_cache = {"df": None, "ts": 0.0}
 CACHE_TTL = 300  # seconds
 CACHE_FILE = "students_cache.json"
+COLLECTED_NUMBERS_PATH = "collected_numbers.csv"
+
+def save_collected_number(name, phone, roll_no, school):
+    import csv
+    from datetime import datetime
+    file_exists = os.path.exists(COLLECTED_NUMBERS_PATH)
+    with open(COLLECTED_NUMBERS_PATH, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["Timestamp", "Name", "Phone", "Exam Roll Number", "School"])
+        writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), name, phone, roll_no, school])
 
 def load_data():
     now = _time.time()
@@ -129,6 +148,101 @@ async def route_result(request: Request):
     return templates.TemplateResponse(request=request, name="result.html", context={"student": student_data})
 
 # ---------------------------------------------------------------------------
+# Admin Routes
+# ---------------------------------------------------------------------------
+@app.get("/admin/login", response_class=HTMLResponse)
+async def admin_login_page(request: Request):
+    if request.session.get("is_admin"):
+        return RedirectResponse(url="/admin")
+    return templates.TemplateResponse(request=request, name="admin_login.html")
+
+@app.post("/admin/login")
+async def admin_login_action(request: Request):
+    form_data = await request.form()
+    username = form_data.get("username")
+    password = form_data.get("password")
+    
+    # Credentials from .env
+    env_user = os.getenv("ADMIN_USERNAME", "admin")
+    env_pass = os.getenv("ADMIN_PASSWORD", "admin123")
+    
+    if username == env_user and password == env_pass:
+        request.session["is_admin"] = True
+        return RedirectResponse(url="/admin", status_code=303)
+    
+    return templates.TemplateResponse(request=request, name="admin_login.html", context={"error": "Invalid credentials"})
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request, _ = Depends(is_admin)):
+    df = load_data()
+    total_students = len(df) if df is not None else 0
+    total_schools = len(df["School Name"].unique()) if df is not None and "School Name" in df.columns else 0
+    
+    return templates.TemplateResponse(request=request, name="admin_dashboard.html", context={
+        "total_students": total_students,
+        "total_schools": total_schools
+    })
+
+@app.get("/admin/logout")
+async def admin_logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/admin/login")
+
+@app.get("/admin/download-csv")
+async def admin_download_csv(_ = Depends(is_admin)):
+    if os.path.exists(CSV_DATA_PATH):
+        return FileResponse(CSV_DATA_PATH, media_type="text/csv", filename="Student_Data_Backup.csv")
+    raise HTTPException(status_code=404, detail="CSV file not found")
+
+@app.post("/admin/upload-csv")
+async def admin_upload_csv(request: Request, file: UploadFile = File(...), _ = Depends(is_admin)):
+    if not file.filename.endswith(".csv"):
+        return templates.TemplateResponse(request=request, name="admin_dashboard.html", context={"error": "Please upload a valid CSV file."})
+    
+    try:
+        # Save to temp file to validate
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
+        
+        # Validate Structure
+        try:
+            df_new = pd.read_csv(tmp_path)
+            required_cols = [
+                "Exam Roll Number", "Name", "School Name", "Std.", "Div", "Roll No.", 
+                "MCQ TOTAL MARKS", "ESSAY MARKS", "TOTAL",
+                "Public Administration", "Business & Startups", "AI & Technology", 
+                "Ethical & Moral Values", "International Relation", "Environment & Agriculture", 
+                "Culture", "Sports", "Visionary Thinking"
+            ]
+            missing = [c for c in required_cols if c not in df_new.columns]
+            
+            if missing:
+                os.remove(tmp_path)
+                return templates.TemplateResponse(request=request, name="admin_dashboard.html", context={"error": f"Invalid CSV structure. Missing columns: {', '.join(missing)}"})
+            
+            # Success - Overwrite old file
+            df_new.to_csv(CSV_DATA_PATH, index=False)
+            os.remove(tmp_path)
+            
+            # CLEAR CACHE
+            _data_cache["df"] = None
+            _data_cache["ts"] = 0.0
+            
+            return templates.TemplateResponse(request=request, name="admin_dashboard.html", context={
+                "success": "CSV uploaded and data refreshed successfully!",
+                "total_students": len(df_new),
+                "total_schools": len(df_new["School Name"].unique()) if "School Name" in df_new.columns else 0
+            })
+            
+        except Exception as e:
+            if os.path.exists(tmp_path): os.remove(tmp_path)
+            return templates.TemplateResponse(request=request, name="admin_dashboard.html", context={"error": f"Error processing CSV: {str(e)}"})
+            
+    except Exception as e:
+        return templates.TemplateResponse(request=request, name="admin_dashboard.html", context={"error": f"Upload failed: {str(e)}"})
+
+# ---------------------------------------------------------------------------
 # PDF Generation Rendering Route (Secure Internal Use)
 # ---------------------------------------------------------------------------
 @app.get("/render-pdf-preview", response_class=HTMLResponse)
@@ -152,6 +266,43 @@ async def api_select_student(request: Request, body: dict):
         raise HTTPException(status_code=400, detail="Missing row index")
     request.session["student_idx"] = idx
     return {"success": True}
+
+@app.post("/api/save-number")
+async def api_save_number(body: dict):
+    name = body.get("name")
+    phone = body.get("phone")
+    roll_no = body.get("roll_no")
+    school = body.get("school")
+    
+    if not all([name, phone, roll_no, school]):
+        raise HTTPException(status_code=400, detail="Missing required fields")
+    
+    save_collected_number(name, phone, roll_no, school)
+    return {"success": True}
+
+@app.get("/admin/collected-numbers")
+async def get_collected_numbers(_ = Depends(is_admin)):
+    if not os.path.exists(COLLECTED_NUMBERS_PATH):
+        return {"rows": []}
+    
+    try:
+        df_leads = pd.read_csv(COLLECTED_NUMBERS_PATH)
+        df_leads = df_leads.fillna("")
+        return {"rows": df_leads.values.tolist()}
+    except Exception as e:
+        print(f"Error reading leads: {e}")
+        return {"rows": []}
+
+@app.get("/admin/download-leads-csv")
+async def download_leads_csv(_ = Depends(is_admin)):
+    # If it doesn't exist, create it with headers so the user gets an empty CSV
+    if not os.path.exists(COLLECTED_NUMBERS_PATH):
+        import csv
+        with open(COLLECTED_NUMBERS_PATH, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Timestamp", "Name", "Phone", "Exam Roll Number", "School"])
+            
+    return FileResponse(COLLECTED_NUMBERS_PATH, media_type="text/csv", filename="Collected_Numbers.csv")
 
 @app.get("/api/current-student")
 async def get_current_student(request: Request):

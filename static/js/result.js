@@ -1,3 +1,5 @@
+let currentStudent = null;
+
 async function init() {
     const res = await fetch("/api/current-student");
     if (!res.ok) {
@@ -5,6 +7,7 @@ async function init() {
         return;
     }
     const data = await res.json();
+    currentStudent = data.student;
     renderResult(data.student);
 }
 
@@ -40,6 +43,37 @@ function renderResult(row) {
             else card.classList.add('cs-brightgreen');
         }
     });
+}
+
+async function handleDownload() {
+    const phone = document.getElementById('res-phone-input').value;
+    const errorEl = document.getElementById('res-phone-error');
+    
+    // Phone validation: 10 digits, starts with 6,7,8,9
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+        errorEl.textContent = "Invalid mobile number. It must be 10 digits and start with 6, 7, 8, or 9.";
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    
+    errorEl.classList.add('hidden');
+
+    // Save number to backend
+    if (currentStudent) {
+        await fetch("/api/save-number", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: currentStudent[2],
+                phone: phone,
+                roll_no: currentStudent[1],
+                school: currentStudent[3]
+            })
+        });
+    }
+
+    await downloadPdf();
 }
 
 async function downloadPdf() {
